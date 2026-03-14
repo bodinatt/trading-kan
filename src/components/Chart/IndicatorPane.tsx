@@ -24,6 +24,7 @@ import {
 } from '../../utils/indicators';
 import type { IndicatorConfig } from '../../stores/indicatorStore';
 import { useThemeStore, getPaneOptions } from '../../stores/themeStore';
+import { useTimeScaleSyncStore } from '../../stores/timeScaleSyncStore';
 
 interface IndicatorPaneProps {
   indicator: IndicatorConfig;
@@ -34,6 +35,7 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRefs = useRef<ISeriesApi<'Line' | 'Histogram'>[]>([]);
+  const isSyncingRef = useRef(false);
   const data = useChartStore((s) => s.data);
   const theme = useThemeStore((s) => s.theme);
 
@@ -48,6 +50,18 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
     });
 
     chartRef.current = chart;
+
+    // When indicator pane is scrolled, sync back to main chart
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range && !isSyncingRef.current) {
+        isSyncingRef.current = true;
+        useTimeScaleSyncStore.getState().setVisibleLogicalRange({
+          from: range.from,
+          to: range.to,
+        });
+        requestAnimationFrame(() => { isSyncingRef.current = false; });
+      }
+    });
 
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current) {
@@ -66,6 +80,24 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
       seriesRefs.current = [];
     };
   }, [theme]);
+
+  // Sync time scale from main chart
+  useEffect(() => {
+    const unsub = useTimeScaleSyncStore.subscribe((state) => {
+      const chart = chartRef.current;
+      if (!chart || isSyncingRef.current) return;
+      if (state.visibleLogicalRange) {
+        isSyncingRef.current = true;
+        try {
+          chart.timeScale().setVisibleLogicalRange(state.visibleLogicalRange);
+        } catch {
+          // Range might be out of bounds
+        }
+        requestAnimationFrame(() => { isSyncingRef.current = false; });
+      }
+    });
+    return unsub;
+  }, []);
 
   // Update data when it changes
   useEffect(() => {
@@ -443,7 +475,19 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
       seriesRefs.current.push(series);
     }
 
-    chart.timeScale().fitContent();
+    // Sync to main chart's visible range instead of fitContent
+    const syncRange = useTimeScaleSyncStore.getState().visibleLogicalRange;
+    if (syncRange) {
+      isSyncingRef.current = true;
+      try {
+        chart.timeScale().setVisibleLogicalRange(syncRange);
+      } catch {
+        chart.timeScale().fitContent();
+      }
+      requestAnimationFrame(() => { isSyncingRef.current = false; });
+    } else {
+      chart.timeScale().fitContent();
+    }
   }, [data, indicator]);
 
   if (!indicator.visible) return null;

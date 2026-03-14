@@ -18,6 +18,7 @@ import type { ChartType, TimezoneId } from '../../stores/chartStore';
 import { useChartStore } from '../../stores/chartStore';
 import { useThemeStore, getChartOptions } from '../../stores/themeStore';
 import { useCrosshairStore } from '../../stores/crosshairStore';
+import { useTimeScaleSyncStore } from '../../stores/timeScaleSyncStore';
 
 type MainSeriesApi =
   | ISeriesApi<'Candlestick'>
@@ -59,6 +60,16 @@ export function useChart(
 
     chartRef.current = chart;
 
+    // Sync time scale to indicator panes
+    const timeScaleUnsub = chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range) {
+        useTimeScaleSyncStore.getState().setVisibleLogicalRange({
+          from: range.from,
+          to: range.to,
+        });
+      }
+    });
+
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current) {
         chart.applyOptions({
@@ -70,6 +81,7 @@ export function useChart(
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      timeScaleUnsub();
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;

@@ -55,7 +55,7 @@ export function SymbolSearch() {
   }, [isOpen, updatePos]);
 
   const handleSelect = (sym: SymbolInfo) => {
-    setSymbol(sym.symbol);
+    setSymbol(sym.symbol, sym);
     setQuery('');
     setIsOpen(false);
   };

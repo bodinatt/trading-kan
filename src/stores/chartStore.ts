@@ -32,7 +32,7 @@ interface ChartState {
   logScale: boolean;
   percentageScale: boolean;
 
-  setSymbol: (symbol: string) => void;
+  setSymbol: (symbol: string, info?: SymbolInfo) => void;
   setTimeframe: (tf: TimeframeKey) => void;
   setChartType: (ct: ChartType) => void;
   setTimezone: (tz: TimezoneId) => void;
@@ -61,8 +61,11 @@ export const useChartStore = create<ChartState>((set, get) => ({
   logScale: false,
   percentageScale: false,
 
-  setSymbol: (symbol) => {
-    set({ symbol });
+  setSymbol: (symbol, info) => {
+    set({
+      symbol,
+      symbolInfo: info ?? { symbol, name: symbol, exchange: 'Binance', type: 'crypto' },
+    });
     // Sync to the active panel in multi-chart layout so MiniChart picks up the change
     const { activePanel, updatePanel, preset } = useLayoutStore.getState();
     if (preset !== '1x1') {

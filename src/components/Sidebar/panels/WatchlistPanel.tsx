@@ -98,10 +98,7 @@ function AddSymbolSearch({ isDark, groupId }: { isDark: boolean; groupId?: strin
   };
 
   const handleSelect = (info: SymbolInfo) => {
-    addItem(info.symbol, info.name);
-    if (groupId !== undefined) {
-      moveItemToGroup(info.symbol, groupId ?? null);
-    }
+    addItem(info.symbol, info.name, groupId ?? 'default');
     setQuery('');
     setResults([]);
     setOpen(false);

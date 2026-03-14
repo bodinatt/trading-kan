@@ -23,7 +23,7 @@ interface WatchlistState {
   items: WatchlistItem[];
   groups: WatchlistGroup[];
   sortBy: SortOption;
-  addItem: (symbol: string, name: string) => void;
+  addItem: (symbol: string, name: string, groupId?: string | null) => void;
   removeItem: (symbol: string) => void;
   updatePrice: (
     symbol: string,
@@ -62,10 +62,10 @@ export const useWatchlistStore = create<WatchlistState>()(
       groups: DEFAULT_GROUPS,
       sortBy: 'none' as SortOption,
 
-      addItem: (symbol, name) =>
+      addItem: (symbol, name, groupId) =>
         set((state) => {
           if (state.items.find((i) => i.symbol === symbol)) return state;
-          return { items: [...state.items, { symbol, name, groupId: 'default' }] };
+          return { items: [...state.items, { symbol, name, groupId: groupId ?? 'default' }] };
         }),
 
       removeItem: (symbol) =>

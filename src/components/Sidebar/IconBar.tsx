@@ -1,6 +1,7 @@
 import { useSidePanelStore, type PanelId } from '../../stores/sidePanelStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useTranslation } from '../../i18n';
+import { useNotificationStore } from '../../stores/notificationStore';
 
 const icons: { id: PanelId; path: string }[] = [
   {
@@ -53,6 +54,7 @@ export function IconBar() {
   const togglePanel = useSidePanelStore((s) => s.togglePanel);
   const isDark = useThemeStore((s) => s.theme) === 'dark';
   const tx = useTranslation();
+  const hasUnread = useNotificationStore((s) => s.notifications.some((n) => !n.read));
 
   return (
     <div
@@ -76,7 +78,7 @@ export function IconBar() {
         return (
           <button
             key={id}
-            className={btnClass}
+            className={`${btnClass} relative`}
             title={label}
             onClick={() => togglePanel(id)}
           >
@@ -91,6 +93,9 @@ export function IconBar() {
             >
               <path d={path} />
             </svg>
+            {id === 'notifications' && hasUnread && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            )}
           </button>
         );
       })}

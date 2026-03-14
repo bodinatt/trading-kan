@@ -8,6 +8,7 @@ import { ScreenerPanel } from './panels/ScreenerPanel';
 import { NewsPanel } from './panels/NewsPanel';
 import { CalendarPanel } from './panels/CalendarPanel';
 import { WatchlistPanel } from './panels/WatchlistPanel';
+import { NotificationsPanel } from './panels/NotificationsPanel';
 
 const panelTranslationKey: Record<PanelId, keyof Translations> = {
   watchlist: 'panelWatchlist',
@@ -85,6 +86,8 @@ export function PanelContainer() {
         <NewsPanel />
       ) : activePanel === 'calendar' ? (
         <CalendarPanel />
+      ) : activePanel === 'notifications' ? (
+        <NotificationsPanel />
       ) : activePanel === 'help' ? (
         <HelpPanel />
       ) : (

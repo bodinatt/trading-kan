@@ -2,6 +2,7 @@ import { useSidePanelStore, type PanelId } from '../../stores/sidePanelStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useTranslation, type Translations } from '../../i18n';
 import { AlertsPanel } from './panels/AlertsPanel';
+import { DataWindowPanel } from './panels/DataWindowPanel';
 
 const panelTranslationKey: Record<PanelId, keyof Translations> = {
   watchlist: 'panelWatchlist',
@@ -67,6 +68,10 @@ export function PanelContainer() {
       {/* Body */}
       {activePanel === 'alerts' ? (
         <AlertsPanel />
+      ) : activePanel === 'dataWindow' ? (
+        <div className="flex-1 overflow-y-auto p-3">
+          <DataWindowPanel />
+        </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-3">
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>

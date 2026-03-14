@@ -236,8 +236,75 @@ interface ConfigTabProps {
 }
 
 function ConfigTab({ isDark, inputBg, cardBg, textPrimary, textSecondary, border, t, strategyConfig, setStrategyType, setStrategyParams, settings, updateSettings, periodBars, setPeriodBars }: ConfigTabProps) {
+  const [showGuide, setShowGuide] = useState(() => {
+    return localStorage.getItem('bt-guide-dismissed') !== 'true';
+  });
+  const [showStrategies, setShowStrategies] = useState(false);
+
+  const dismissGuide = () => {
+    setShowGuide(false);
+    localStorage.setItem('bt-guide-dismissed', 'true');
+  };
+
   return (
     <div className="space-y-4">
+      {/* Beginner Guide */}
+      {showGuide && (
+        <div className={`rounded-lg p-3 border ${isDark ? 'border-blue-800 bg-blue-950/30' : 'border-blue-200 bg-blue-50'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className={`text-xs font-semibold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>{t.btGuideTitle}</span>
+            </div>
+            <button onClick={dismissGuide} className={`text-xs px-1.5 py-0.5 rounded ${isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}>✕</button>
+          </div>
+          <div className={`space-y-1 text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p>{t.btGuideStep1}</p>
+            <p>{t.btGuideStep2}</p>
+            <p>{t.btGuideStep3}</p>
+            <p>{t.btGuideStep4}</p>
+            <p>{t.btGuideStep5}</p>
+          </div>
+          <div className={`mt-2 pt-2 border-t ${isDark ? 'border-blue-800/50' : 'border-blue-200'}`}>
+            <p className={`text-[10px] font-medium mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-700'}`}>Tips:</p>
+            <div className={`space-y-0.5 text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p>• {t.btGuideTip1}</p>
+              <p>• {t.btGuideTip2}</p>
+              <p>• {t.btGuideTip3}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowStrategies(!showStrategies)}
+            className={`mt-2 text-[10px] font-medium ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+          >
+            {showStrategies ? '▾' : '▸'} {t.btGuideStrategies}
+          </button>
+          {showStrategies && (
+            <div className={`mt-1 space-y-1 text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p>• {t.btGuideMaCrossover}</p>
+              <p>• {t.btGuideRsi}</p>
+              <p>• {t.btGuideMacd}</p>
+              <p>• {t.btGuideBollinger}</p>
+              <p>• {t.btGuideSupertrend}</p>
+              <p>• {t.btGuideStochastic}</p>
+              <p>• {t.btGuideCombined}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Show guide toggle when dismissed */}
+      {!showGuide && (
+        <button
+          onClick={() => setShowGuide(true)}
+          className={`text-[10px] ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+        >
+          ℹ {t.btGuideTitle}
+        </button>
+      )}
+
       {/* Strategy Selection */}
       <div className={`rounded-lg p-3 ${cardBg}`}>
         <label className={`block text-xs font-medium mb-1.5 ${textSecondary}`}>{t.btStrategy}</label>

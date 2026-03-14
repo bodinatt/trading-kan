@@ -304,6 +304,23 @@ export interface Translations {
   btLogic: string;
   btNoResults: string;
   btNoTrades: string;
+  btGuideTitle: string;
+  btGuideStep1: string;
+  btGuideStep2: string;
+  btGuideStep3: string;
+  btGuideStep4: string;
+  btGuideStep5: string;
+  btGuideTip1: string;
+  btGuideTip2: string;
+  btGuideTip3: string;
+  btGuideStrategies: string;
+  btGuideMaCrossover: string;
+  btGuideRsi: string;
+  btGuideMacd: string;
+  btGuideBollinger: string;
+  btGuideSupertrend: string;
+  btGuideStochastic: string;
+  btGuideCombined: string;
 
   // Help Tooltips (for beginners)
   helpSMA: string;

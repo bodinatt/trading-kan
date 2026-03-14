@@ -1376,8 +1376,29 @@ export function DrawingOverlay({ chartRef, seriesRef }: DrawingOverlayProps) {
           scheduleRender();
         }
 
-        // If we didn't hit anything and there was a selection, we just deselected.
-        // Don't pass through to chart in either case since we're in the overlay.
+        // If we hit a drawing, consume the event (don't pass to chart)
+        if (hitId) return;
+
+        // If we didn't hit any drawing, pass the event through to the chart
+        // by temporarily disabling pointer events and re-dispatching
+        const canvas = canvasRef.current;
+        if (canvas) {
+          canvas.style.pointerEvents = 'none';
+          const target = document.elementFromPoint(e.clientX, e.clientY);
+          if (target && target !== canvas) {
+            target.dispatchEvent(new MouseEvent('mousedown', {
+              clientX: e.clientX,
+              clientY: e.clientY,
+              button: e.button,
+              bubbles: true,
+              cancelable: true,
+            }));
+          }
+          // Re-enable pointer events after a short delay
+          requestAnimationFrame(() => {
+            if (canvas) canvas.style.pointerEvents = needsPointerEvents ? 'auto' : 'none';
+          });
+        }
         return;
       }
 
@@ -2013,7 +2034,11 @@ export function DrawingOverlay({ chartRef, seriesRef }: DrawingOverlayProps) {
     [activeTool, symbol, activeColor, activeLineWidth, addDrawing, setActiveTool, xToTime, yToPrice, timeToX, priceToY, scheduleRender, applyHandleDrag, applyBodyDrag, updateDrawing]
   );
 
-  // Determine if we need pointer events (always on when there are drawings or a tool is active)
+  // Determine if we need pointer events:
+  // - Always on when a drawing tool is active (not cursor)
+  // - When in cursor mode with drawings, we use a special approach:
+  //   the canvas captures events but passes them through to the chart
+  //   when the user isn't interacting with a drawing
   const needsPointerEvents = isToolActive || drawings.length > 0;
 
   const confirmTextInput = useCallback(() => {
@@ -2038,6 +2063,31 @@ export function DrawingOverlay({ chartRef, seriesRef }: DrawingOverlayProps) {
     setActiveTool('cursor');
   }, [setActiveTool]);
 
+  // Pass wheel events through to chart when in cursor mode (for zoom/scroll)
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    if (!isToolActive) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.pointerEvents = 'none';
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target && target !== canvas) {
+          target.dispatchEvent(new WheelEvent('wheel', {
+            clientX: e.clientX,
+            clientY: e.clientY,
+            deltaX: e.deltaX,
+            deltaY: e.deltaY,
+            deltaMode: e.deltaMode,
+            bubbles: true,
+            cancelable: true,
+          }));
+        }
+        requestAnimationFrame(() => {
+          if (canvas) canvas.style.pointerEvents = needsPointerEvents ? 'auto' : 'none';
+        });
+      }
+    }
+  }, [isToolActive, needsPointerEvents]);
+
   return (
     <>
       <canvas
@@ -2053,6 +2103,7 @@ export function DrawingOverlay({ chartRef, seriesRef }: DrawingOverlayProps) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

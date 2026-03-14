@@ -182,7 +182,8 @@ export function useChart(
   const setData = useCallback(
     (
       data: CandlestickData[],
-      volumeData?: { time: CandlestickData['time']; value: number; color: string }[]
+      volumeData?: { time: CandlestickData['time']; value: number; color: string }[],
+      shouldFitContent = true
     ) => {
       // Store data for re-application on chart type change
       pendingDataRef.current = { data, volumeData };
@@ -193,7 +194,9 @@ export function useChart(
       if (volumeData) {
         volumeRef.current?.setData(volumeData);
       }
-      chartRef.current?.timeScale().fitContent();
+      if (shouldFitContent) {
+        chartRef.current?.timeScale().fitContent();
+      }
     },
     []
   );

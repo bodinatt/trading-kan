@@ -89,15 +89,21 @@ export function ChartContainer() {
     };
   }, [effectiveData]);
 
+  // Track whether we need to fitContent (only on symbol/timeframe change)
+  const needsFitRef = useRef(true);
+
   // Load historical data on symbol/timeframe change
   useEffect(() => {
+    needsFitRef.current = true;
     loadData();
   }, [symbol, timeframe, loadData]);
 
   // Push data to chart when it changes
   useEffect(() => {
     if (effectiveData.length > 0) {
-      setData(toChartData(effectiveData), toVolumeData(effectiveData));
+      const shouldFit = needsFitRef.current;
+      setData(toChartData(effectiveData), toVolumeData(effectiveData), shouldFit);
+      needsFitRef.current = false;
     }
   }, [effectiveData, setData]);
 

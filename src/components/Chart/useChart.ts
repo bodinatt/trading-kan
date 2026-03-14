@@ -175,7 +175,15 @@ export function useChart(
       if (volumeData) {
         volumeSeries.setData(volumeData);
       }
-      chart.timeScale().fitContent();
+      const VISIBLE_BARS = 200;
+      if (data.length > VISIBLE_BARS) {
+        chart.timeScale().setVisibleLogicalRange({
+          from: data.length - VISIBLE_BARS,
+          to: data.length + 10,
+        });
+      } else {
+        chart.timeScale().fitContent();
+      }
     }
   }, [chartType]);
 
@@ -194,8 +202,19 @@ export function useChart(
       if (volumeData) {
         volumeRef.current?.setData(volumeData);
       }
-      if (shouldFitContent) {
-        chartRef.current?.timeScale().fitContent();
+      if (shouldFitContent && chartRef.current) {
+        const timeScale = chartRef.current.timeScale();
+        // Show last ~200 bars for a good default zoom level (like TradingView)
+        const VISIBLE_BARS = 200;
+        const totalBars = data.length;
+        if (totalBars > VISIBLE_BARS) {
+          timeScale.setVisibleLogicalRange({
+            from: totalBars - VISIBLE_BARS,
+            to: totalBars + 10, // Small right margin
+          });
+        } else {
+          timeScale.fitContent();
+        }
       }
     },
     []
@@ -266,7 +285,18 @@ export function useChart(
   }, []);
 
   const fitContent = useCallback(() => {
-    chartRef.current?.timeScale().fitContent();
+    if (!chartRef.current) return;
+    const timeScale = chartRef.current.timeScale();
+    const totalBars = pendingDataRef.current?.data.length ?? 0;
+    const VISIBLE_BARS = 200;
+    if (totalBars > VISIBLE_BARS) {
+      timeScale.setVisibleLogicalRange({
+        from: totalBars - VISIBLE_BARS,
+        to: totalBars + 10,
+      });
+    } else {
+      timeScale.fitContent();
+    }
   }, []);
 
   const zoomIn = useCallback(() => {

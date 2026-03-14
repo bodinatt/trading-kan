@@ -40,9 +40,15 @@ export const binanceProvider: DataProvider = {
     const sym = symbol.toUpperCase();
     const MAX_PER_REQUEST = 1000;
 
+    const fetchWithTimeout = (url: string, timeoutMs = 10000) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+    };
+
     if (limit <= MAX_PER_REQUEST) {
       const url = `${BINANCE_REST}/klines?symbol=${sym}&interval=${interval}&limit=${limit}`;
-      const res = await fetch(url);
+      const res = await fetchWithTimeout(url);
       if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
       const data = await res.json();
       return data.map(mapKline);
@@ -57,7 +63,7 @@ export const binanceProvider: DataProvider = {
       const batchSize = Math.min(remaining, MAX_PER_REQUEST);
       let url = `${BINANCE_REST}/klines?symbol=${sym}&interval=${interval}&limit=${batchSize}`;
       if (endTime !== undefined) url += `&endTime=${endTime}`;
-      const res = await fetch(url);
+      const res = await fetchWithTimeout(url);
       if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
       const data = await res.json();
       if (data.length === 0) break;

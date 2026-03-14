@@ -50,7 +50,7 @@ function toVolumeData(data: OHLCData[]) {
 
 export function ChartContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { symbol, timeframe, chartType, data, loadData, isLoading } = useChartStore();
+  const { symbol, timeframe, chartType, data, loadData, isLoading, error } = useChartStore();
   const isDark = useThemeStore((s) => s.theme) === 'dark';
   const t = useTranslation();
   const {
@@ -356,8 +356,25 @@ export function ChartContainer() {
         />
       )}
       {isLoading && (
-        <div className={`absolute inset-0 flex items-center justify-center ${isDark ? 'bg-gray-900/50' : 'bg-white/50'}`}>
-          <div className={`text-sm animate-pulse ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.loading}</div>
+        <div className={`absolute inset-0 flex items-center justify-center z-20 ${isDark ? 'bg-gray-900/60' : 'bg-white/60'} backdrop-blur-[1px]`}>
+          <div className="flex flex-col items-center gap-3">
+            <div className={`w-8 h-8 border-3 rounded-full animate-spin ${isDark ? 'border-gray-700 border-t-blue-400' : 'border-gray-200 border-t-blue-500'}`} />
+            <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              {t.loading} {symbol}...
+            </div>
+          </div>
+        </div>
+      )}
+      {!isLoading && error && (
+        <div className={`absolute inset-0 flex items-center justify-center z-20 ${isDark ? 'bg-gray-900/60' : 'bg-white/60'}`}>
+          <div className="flex flex-col items-center gap-2 max-w-xs text-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <div className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+              {symbol}: {error}
+            </div>
+          </div>
         </div>
       )}
     </div>

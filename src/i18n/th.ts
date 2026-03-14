@@ -209,6 +209,8 @@ export const th: Translations = {
   // Watchlist
   watchlist: 'รายการจับตา',
   addSymbol: 'เพิ่มสัญลักษณ์...',
+  addToWatchlist: 'เพิ่มเข้ารายการเฝ้าดู',
+  alreadyInWatchlist: 'อยู่ในรายการเฝ้าดูแล้ว',
   custom: 'กำหนดเอง',
   name: 'ชื่อ',
   moveUp: 'เลื่อนขึ้น',

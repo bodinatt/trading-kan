@@ -209,6 +209,8 @@ export const en: Translations = {
   // Watchlist
   watchlist: 'Watchlist',
   addSymbol: 'Add symbol...',
+  addToWatchlist: 'Add to Watchlist',
+  alreadyInWatchlist: 'Already in Watchlist',
   custom: 'Custom',
   name: 'Name',
   moveUp: 'Move up',

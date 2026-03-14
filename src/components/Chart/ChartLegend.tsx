@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, type RefObject } from 'react';
 import type { IChartApi } from 'lightweight-charts';
 import { useThemeStore } from '../../stores/themeStore';
 import { useChartStore, type TimezoneId } from '../../stores/chartStore';
+import { useWatchlistStore } from '../../stores/watchlistStore';
 import { useTranslation } from '../../i18n';
 
 interface LegendData {
@@ -120,6 +121,7 @@ export function ChartLegend({ chartRef, symbol, latestData }: ChartLegendProps) 
     >
       <div className="flex items-center gap-2">
         <SymbolWithTooltip symbol={symbol} displayData={displayData} />
+        <AddToWatchlistButton symbol={symbol} />
         <span className={`pointer-events-none ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.legendOpen}</span>
         <span className="pointer-events-none" style={{ color: valueColor }}>{formatPrice(displayData.open)}</span>
         <span className={`pointer-events-none ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.legendHigh}</span>
@@ -250,5 +252,108 @@ function SymbolWithTooltip({
         </div>
       )}
     </span>
+  );
+}
+
+/* ---------- Add to Watchlist button with group picker ---------- */
+function AddToWatchlistButton({ symbol }: { symbol: string }) {
+  const [open, setOpen] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isDark = useThemeStore((s) => s.theme) === 'dark';
+  const t = useTranslation();
+
+  const items = useWatchlistStore((s) => s.items);
+  const groups = useWatchlistStore((s) => s.groups);
+  const addItem = useWatchlistStore((s) => s.addItem);
+  const symbolInfo = useChartStore((s) => s.symbolInfo);
+
+  const alreadyIn = items.some((i) => i.symbol === symbol);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Flash checkmark briefly after adding
+  useEffect(() => {
+    if (!justAdded) return;
+    const timer = setTimeout(() => setJustAdded(false), 1500);
+    return () => clearTimeout(timer);
+  }, [justAdded]);
+
+  const handleAdd = (groupId: string) => {
+    addItem(symbol, symbolInfo?.name ?? symbol, groupId);
+    setOpen(false);
+    setJustAdded(true);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => {
+          if (alreadyIn) return;
+          if (groups.length <= 1) {
+            // Only one group — add directly without showing picker
+            handleAdd(groups[0]?.id ?? 'default');
+          } else {
+            setOpen(!open);
+          }
+        }}
+        className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-sans transition-colors ${
+          alreadyIn
+            ? isDark
+              ? 'text-green-400 bg-green-900/30'
+              : 'text-green-600 bg-green-100'
+            : justAdded
+              ? isDark
+                ? 'text-green-400 bg-green-900/30'
+                : 'text-green-600 bg-green-100'
+              : isDark
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+        }`}
+        title={alreadyIn ? t.alreadyInWatchlist : t.addToWatchlist}
+      >
+        {alreadyIn || justAdded ? (
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        )}
+      </button>
+
+      {/* Group picker dropdown */}
+      {open && (
+        <div
+          className={`absolute top-full left-0 mt-1 min-w-[140px] border rounded-lg shadow-xl py-1 text-xs font-sans z-50 ${
+            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}
+        >
+          <div className={`px-2 py-1 font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+            {t.addToWatchlist}
+          </div>
+          {groups.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => handleAdd(g.id)}
+              className={`w-full text-left px-2 py-1.5 transition-colors ${
+                isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

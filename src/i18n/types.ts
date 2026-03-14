@@ -209,6 +209,8 @@ export interface Translations {
   // Watchlist
   watchlist: string;
   addSymbol: string;
+  addToWatchlist: string;
+  alreadyInWatchlist: string;
   custom: string;
   name: string;
   moveUp: string;

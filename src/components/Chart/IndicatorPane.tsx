@@ -52,10 +52,10 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
     chartRef.current = chart;
 
     // When indicator pane is scrolled, sync back to main chart
-    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+    chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
       if (range && !isSyncingRef.current) {
         isSyncingRef.current = true;
-        useTimeScaleSyncStore.getState().setVisibleLogicalRange({
+        useTimeScaleSyncStore.getState().setVisibleTimeRange({
           from: range.from,
           to: range.to,
         });
@@ -81,15 +81,15 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
     };
   }, [theme]);
 
-  // Sync time scale from main chart
+  // Sync time scale from main chart (time-based)
   useEffect(() => {
     const unsub = useTimeScaleSyncStore.subscribe((state) => {
       const chart = chartRef.current;
       if (!chart || isSyncingRef.current) return;
-      if (state.visibleLogicalRange) {
+      if (state.visibleTimeRange) {
         isSyncingRef.current = true;
         try {
-          chart.timeScale().setVisibleLogicalRange(state.visibleLogicalRange);
+          chart.timeScale().setVisibleRange(state.visibleTimeRange);
         } catch {
           // Range might be out of bounds
         }
@@ -475,12 +475,12 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
       seriesRefs.current.push(series);
     }
 
-    // Sync to main chart's visible range instead of fitContent
-    const syncRange = useTimeScaleSyncStore.getState().visibleLogicalRange;
+    // Sync to main chart's visible time range instead of fitContent
+    const syncRange = useTimeScaleSyncStore.getState().visibleTimeRange;
     if (syncRange) {
       isSyncingRef.current = true;
       try {
-        chart.timeScale().setVisibleLogicalRange(syncRange);
+        chart.timeScale().setVisibleRange(syncRange);
       } catch {
         chart.timeScale().fitContent();
       }

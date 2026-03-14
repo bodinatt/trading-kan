@@ -60,10 +60,10 @@ export function useChart(
 
     chartRef.current = chart;
 
-    // Sync time scale to indicator panes
-    const timeScaleUnsub = chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+    // Sync time scale to indicator panes using time-based range
+    const timeScaleUnsub = chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
       if (range) {
-        useTimeScaleSyncStore.getState().setVisibleLogicalRange({
+        useTimeScaleSyncStore.getState().setVisibleTimeRange({
           from: range.from,
           to: range.to,
         });

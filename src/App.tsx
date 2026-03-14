@@ -3,7 +3,8 @@ import { ChartContainer } from './components/Chart/ChartContainer';
 import { IndicatorPane } from './components/Chart/IndicatorPane';
 import { MultiChartGrid } from './components/Chart/MultiChartGrid';
 import { Toolbar } from './components/Toolbar/Toolbar';
-import { Watchlist } from './components/Watchlist/Watchlist';
+import { RightSidebar } from './components/Sidebar/RightSidebar';
+import { useSidePanelStore } from './stores/sidePanelStore';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { AlertPanel } from './components/Alerts/AlertPanel';
 import { useIndicatorStore } from './stores/indicatorStore';
@@ -25,7 +26,7 @@ import { useAuthStore } from './stores/authStore';
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [watchlistVisible, setWatchlistVisible] = useState(true);
+
   const [drawingToolsOpen, setDrawingToolsOpen] = useState(false);
   const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
   const indicators = useIndicatorStore((s) => s.indicators);
@@ -38,6 +39,8 @@ function App() {
   const tx = useTranslation();
   const toggleLanguage = useI18nStore((s) => s.toggleLanguage);
   const openBacktest = useBacktestStore((s) => s.openPanel);
+  const chartSymbol = useChartStore((s) => s.symbol);
+  const chartTimeframe = useChartStore((s) => s.timeframe);
 
   useHotkeys();
 
@@ -200,7 +203,7 @@ function App() {
             </div>
             <div className="flex-1 p-2 space-y-1">
               <button
-                onClick={() => { setWatchlistVisible(!watchlistVisible); setMobileMenuOpen(false); }}
+                onClick={() => { useSidePanelStore.getState().togglePanel('watchlist'); setMobileMenuOpen(false); }}
                 className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
                   isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
                 }`}
@@ -208,7 +211,73 @@ function App() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
-                {watchlistVisible ? tx.hideWatchlist : tx.showWatchlist}
+                {tx.panelWatchlist}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('alerts'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {tx.panelAlerts}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('news'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
+                </svg>
+                {tx.panelNews}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('screener'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                {tx.panelScreener}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('calendar'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {tx.panelCalendar}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('notifications'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                {tx.panelNotifications}
+              </button>
+              <button
+                onClick={() => { useSidePanelStore.getState().togglePanel('help'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                  isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {tx.panelHelp}
               </button>
               <button
                 onClick={() => { setDrawingToolsOpen(!drawingToolsOpen); setMobileMenuOpen(false); }}
@@ -275,7 +344,7 @@ function App() {
               <div id="chart-area" className={`flex-1 rounded border overflow-hidden ${
                 isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
               }`}>
-                <ChartContainer />
+                <ChartContainer key={`${chartSymbol}-${chartTimeframe}`} />
               </div>
               {paneIndicators.map((ind) => (
                 <IndicatorPane
@@ -288,12 +357,7 @@ function App() {
           )}
         </div>
 
-        {/* Watchlist - hidden on mobile by default, toggle via hamburger menu */}
-        {watchlistVisible && (
-          <div className={`hidden md:block ${watchlistVisible ? '' : 'md:hidden'}`}>
-            <Watchlist />
-          </div>
-        )}
+        <RightSidebar />
       </main>
 
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

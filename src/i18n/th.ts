@@ -383,6 +383,76 @@ export const th: Translations = {
   // Last Updated
   lastUpdated: 'อัปเดตล่าสุด',
 
+  // Side Panel
+  sidePanel: 'แผงด้านข้าง',
+  panelWatchlist: 'รายการเฝ้าดู',
+  panelAlerts: 'การแจ้งเตือน',
+  panelDataWindow: 'หน้าต่างข้อมูล',
+  panelNews: 'ข่าวสาร',
+  panelScreener: 'ตัวกรอง',
+  panelCalendar: 'ปฏิทินเศรษฐกิจ',
+  panelNotifications: 'การแจ้งเตือน',
+  panelHelp: 'ช่วยเหลือ',
+
+  // Watchlist enhancements
+  newGroup: 'กลุ่มใหม่',
+  renameGroup: 'เปลี่ยนชื่อกลุ่ม',
+  deleteGroup: 'ลบกลุ่ม',
+  moveToGroup: 'ย้ายไปกลุ่ม',
+  ungrouped: 'ไม่มีกลุ่ม',
+  marketCap: 'มูลค่าตลาด',
+  high24h: 'สูงสุด 24 ชม.',
+  low24h: 'ต่ำสุด 24 ชม.',
+
+  // Data Window
+  dataWindow: 'หน้าต่างข้อมูล',
+  noData: 'ไม่มีข้อมูล',
+
+  // News
+  newsTitle: 'ข่าวสาร',
+  allNews: 'ข่าวทั้งหมด',
+  loadMore: 'โหลดเพิ่ม',
+  minutesAgo: 'นาทีที่แล้ว',
+  hoursAgo: 'ชม. ที่แล้ว',
+  daysAgo: 'วันที่แล้ว',
+
+  // Screener
+  screenerTitle: 'ตัวกรอง',
+  topGainers: 'ขึ้นมากสุด',
+  topLosers: 'ลงมากสุด',
+  volumeLeaders: 'ปริมาณซื้อขายสูงสุด',
+  autoRefresh: 'รีเฟรชอัตโนมัติ',
+
+  // Calendar
+  calendarTitle: 'ปฏิทินเศรษฐกิจ',
+  today: 'วันนี้',
+  thisWeek: 'สัปดาห์นี้',
+  nextWeek: 'สัปดาห์หน้า',
+  forecast: 'คาดการณ์',
+  previous: 'ก่อนหน้า',
+  actual: 'จริง',
+  highImpact: 'ผลกระทบสูง',
+  mediumImpact: 'ผลกระทบกลาง',
+  lowImpact: 'ผลกระทบต่ำ',
+
+  // Notifications
+  notificationsTitle: 'การแจ้งเตือน',
+  allNotifications: 'ทั้งหมด',
+  systemNotifications: 'ระบบ',
+  alertNotifications: 'แจ้งเตือน',
+  clearAll: 'ล้างทั้งหมด',
+  noNotifications: 'ไม่มีการแจ้งเตือน',
+
+  // Help
+  helpTitle: 'ช่วยเหลือ',
+  keyboardShortcuts: 'ปุ่มลัด',
+  quickGuide: 'คู่มือเบื้องต้น',
+  appInfo: 'ข้อมูลแอป',
+  howToIndicators: 'วิธีเพิ่มอินดิเคเตอร์',
+  howToDrawings: 'วิธีวาดบนกราฟ',
+  howToAlerts: 'วิธีตั้งการแจ้งเตือน',
+  howToBacktest: 'วิธีทดสอบย้อนหลัง',
+
   // Auth
   signIn: 'เข้าสู่ระบบ',
   signUp: 'สมัครสมาชิก',

@@ -383,6 +383,76 @@ export interface Translations {
   // Last Updated
   lastUpdated: string;
 
+  // Side Panel
+  sidePanel: string;
+  panelWatchlist: string;
+  panelAlerts: string;
+  panelDataWindow: string;
+  panelNews: string;
+  panelScreener: string;
+  panelCalendar: string;
+  panelNotifications: string;
+  panelHelp: string;
+
+  // Watchlist enhancements
+  newGroup: string;
+  renameGroup: string;
+  deleteGroup: string;
+  moveToGroup: string;
+  ungrouped: string;
+  marketCap: string;
+  high24h: string;
+  low24h: string;
+
+  // Data Window
+  dataWindow: string;
+  noData: string;
+
+  // News
+  newsTitle: string;
+  allNews: string;
+  loadMore: string;
+  minutesAgo: string;
+  hoursAgo: string;
+  daysAgo: string;
+
+  // Screener
+  screenerTitle: string;
+  topGainers: string;
+  topLosers: string;
+  volumeLeaders: string;
+  autoRefresh: string;
+
+  // Calendar
+  calendarTitle: string;
+  today: string;
+  thisWeek: string;
+  nextWeek: string;
+  forecast: string;
+  previous: string;
+  actual: string;
+  highImpact: string;
+  mediumImpact: string;
+  lowImpact: string;
+
+  // Notifications
+  notificationsTitle: string;
+  allNotifications: string;
+  systemNotifications: string;
+  alertNotifications: string;
+  clearAll: string;
+  noNotifications: string;
+
+  // Help
+  helpTitle: string;
+  keyboardShortcuts: string;
+  quickGuide: string;
+  appInfo: string;
+  howToIndicators: string;
+  howToDrawings: string;
+  howToAlerts: string;
+  howToBacktest: string;
+
   // Auth
   signIn: string;
   signUp: string;

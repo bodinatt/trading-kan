@@ -383,6 +383,76 @@ export const en: Translations = {
   // Last Updated
   lastUpdated: 'Updated',
 
+  // Side Panel
+  sidePanel: 'Side Panel',
+  panelWatchlist: 'Watchlist',
+  panelAlerts: 'Alerts',
+  panelDataWindow: 'Data Window',
+  panelNews: 'News',
+  panelScreener: 'Screener',
+  panelCalendar: 'Calendar',
+  panelNotifications: 'Notifications',
+  panelHelp: 'Help',
+
+  // Watchlist enhancements
+  newGroup: 'New Group',
+  renameGroup: 'Rename Group',
+  deleteGroup: 'Delete Group',
+  moveToGroup: 'Move to Group',
+  ungrouped: 'Ungrouped',
+  marketCap: 'Market Cap',
+  high24h: '24h High',
+  low24h: '24h Low',
+
+  // Data Window
+  dataWindow: 'Data Window',
+  noData: 'No data',
+
+  // News
+  newsTitle: 'News',
+  allNews: 'All News',
+  loadMore: 'Load More',
+  minutesAgo: 'm ago',
+  hoursAgo: 'h ago',
+  daysAgo: 'd ago',
+
+  // Screener
+  screenerTitle: 'Screener',
+  topGainers: 'Top Gainers',
+  topLosers: 'Top Losers',
+  volumeLeaders: 'Volume Leaders',
+  autoRefresh: 'Auto-refresh',
+
+  // Calendar
+  calendarTitle: 'Economic Calendar',
+  today: 'Today',
+  thisWeek: 'This Week',
+  nextWeek: 'Next Week',
+  forecast: 'Forecast',
+  previous: 'Previous',
+  actual: 'Actual',
+  highImpact: 'High Impact',
+  mediumImpact: 'Medium Impact',
+  lowImpact: 'Low Impact',
+
+  // Notifications
+  notificationsTitle: 'Notifications',
+  allNotifications: 'All',
+  systemNotifications: 'System',
+  alertNotifications: 'Alerts',
+  clearAll: 'Clear All',
+  noNotifications: 'No notifications',
+
+  // Help
+  helpTitle: 'Help',
+  keyboardShortcuts: 'Keyboard Shortcuts',
+  quickGuide: 'Quick Guide',
+  appInfo: 'App Info',
+  howToIndicators: 'How to add indicators',
+  howToDrawings: 'How to draw on chart',
+  howToAlerts: 'How to set alerts',
+  howToBacktest: 'How to backtest',
+
   // Auth
   signIn: 'Sign In',
   signUp: 'Sign Up',

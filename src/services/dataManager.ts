@@ -2,6 +2,7 @@ import type { TimeframeKey } from '../types/chart';
 import type { DataProvider, SymbolInfo } from './types';
 import { binanceProvider } from './binance';
 import { twelveDataProvider, getTwelveDataApiKey } from './twelvedata';
+import { yahooProvider } from './yahoo';
 
 export type MarketType = 'crypto' | 'stock' | 'forex' | 'auto';
 
@@ -31,7 +32,9 @@ function getProvider(market: MarketType): DataProvider {
   if (market === 'crypto') return binanceProvider;
   // For stocks and forex, use TwelveData if API key is available
   if (getTwelveDataApiKey()) return twelveDataProvider;
-  // Fallback to Binance for crypto
+  // Fallback to Yahoo Finance for stocks/ETFs (free, no API key needed)
+  if (market === 'stock') return yahooProvider;
+  // Last resort fallback
   return binanceProvider;
 }
 
@@ -49,11 +52,12 @@ export const dataManager = {
   },
 
   async searchSymbols(query: string): Promise<SymbolInfo[]> {
-    // Search from both providers in parallel
+    // Search from all available providers in parallel
     const results: SymbolInfo[] = [];
 
     const promises: Promise<SymbolInfo[]>[] = [
       binanceProvider.searchSymbols(query).catch(() => []),
+      yahooProvider.searchSymbols(query).catch(() => []),
     ];
 
     if (getTwelveDataApiKey()) {

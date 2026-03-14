@@ -1,6 +1,7 @@
 import { useSidePanelStore, type PanelId } from '../../stores/sidePanelStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useTranslation, type Translations } from '../../i18n';
+import { AlertsPanel } from './panels/AlertsPanel';
 
 const panelTranslationKey: Record<PanelId, keyof Translations> = {
   watchlist: 'panelWatchlist',
@@ -64,11 +65,15 @@ export function PanelContainer() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-3">
-        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          {title} Panel
-        </p>
-      </div>
+      {activePanel === 'alerts' ? (
+        <AlertsPanel />
+      ) : (
+        <div className="flex-1 overflow-y-auto p-3">
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            {title} Panel
+          </p>
+        </div>
+      )}
     </div>
   );
 }

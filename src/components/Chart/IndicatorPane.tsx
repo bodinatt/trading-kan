@@ -51,18 +51,6 @@ export function IndicatorPane({ indicator, onRemove }: IndicatorPaneProps) {
 
     chartRef.current = chart;
 
-    // When indicator pane is scrolled, sync back to main chart
-    chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-      if (range && !isSyncingRef.current) {
-        isSyncingRef.current = true;
-        useTimeScaleSyncStore.getState().setVisibleTimeRange({
-          from: range.from,
-          to: range.to,
-        });
-        requestAnimationFrame(() => { isSyncingRef.current = false; });
-      }
-    });
-
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current) {
         chart.applyOptions({

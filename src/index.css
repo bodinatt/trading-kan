@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Hide lightweight-charts TradingView branding logo */
+.tv-lightweight-charts a[href*="tradingview"] {
+  display: none !important;
+}

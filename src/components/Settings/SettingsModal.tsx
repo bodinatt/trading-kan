@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTwelveDataApiKey, setTwelveDataApiKey } from '../../services/twelvedata';
+import { getTwelveDataApiKey, setTwelveDataApiKey, validateTwelveDataApiKey } from '../../services/twelvedata';
 import { useThemeStore } from '../../stores/themeStore';
 import { useTranslation } from '../../i18n';
 
@@ -10,20 +10,40 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{ valid: boolean; error?: string } | null>(null);
   const isDark = useThemeStore((s) => s.theme) === 'dark';
   const t = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
       setApiKey(getTwelveDataApiKey());
+      setValidationResult(null);
     }
   }, [isOpen]);
 
-  const handleSave = () => {
-    setTwelveDataApiKey(apiKey.trim());
-    onClose();
-    // Reload to apply new API key
-    window.location.reload();
+  const handleSave = async () => {
+    const trimmedKey = apiKey.trim();
+    if (!trimmedKey) return;
+
+    // If key hasn't changed, just close
+    if (trimmedKey === getTwelveDataApiKey()) {
+      onClose();
+      return;
+    }
+
+    // Validate the new key
+    setValidating(true);
+    setValidationResult(null);
+    const result = await validateTwelveDataApiKey(trimmedKey);
+    setValidating(false);
+    setValidationResult(result);
+
+    if (result.valid) {
+      setTwelveDataApiKey(trimmedKey);
+      onClose();
+      window.location.reload();
+    }
   };
 
   if (!isOpen) return null;
@@ -47,10 +67,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <input
               type="text"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(e) => { setApiKey(e.target.value); setValidationResult(null); }}
               placeholder={t.apiKeyPlaceholder}
-              className={`w-full px-3 py-2 rounded text-sm outline-none focus:border-blue-500 border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              className={`w-full px-3 py-2 rounded text-sm outline-none focus:border-blue-500 border ${
+                validationResult && !validationResult.valid
+                  ? 'border-red-500'
+                  : isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
+              }`}
             />
+            {validationResult && !validationResult.valid && (
+              <p className="mt-1 text-[10px] text-red-500">
+                API Key ไม่ถูกต้อง: {validationResult.error}
+              </p>
+            )}
+            {validationResult && validationResult.valid && (
+              <p className="mt-1 text-[10px] text-green-500">
+                API Key ถูกต้อง!
+              </p>
+            )}
             <p className="mt-1 text-[10px] text-gray-500">
               {t.apiKeyHelp}{' '}
               <a
@@ -74,9 +108,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
           <button
             onClick={handleSave}
-            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500"
+            disabled={validating || !apiKey.trim()}
+            className={`px-3 py-1.5 text-xs rounded text-white ${
+              validating || !apiKey.trim()
+                ? 'bg-blue-600/50 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-500'
+            }`}
           >
-            {t.save}
+            {validating ? (
+              <span className="flex items-center gap-1">
+                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                </svg>
+                Testing...
+              </span>
+            ) : t.save}
           </button>
         </div>
       </div>

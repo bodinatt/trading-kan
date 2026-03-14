@@ -89,23 +89,39 @@ export function ChartContainer() {
     };
   }, [effectiveData]);
 
-  // Track whether we need to fitContent (only on symbol/timeframe change)
+  // Track the data length after initial load so we can detect real-time updates vs full reloads
+  const loadedDataLenRef = useRef(0);
   const needsFitRef = useRef(true);
 
   // Load historical data on symbol/timeframe change
   useEffect(() => {
     needsFitRef.current = true;
+    loadedDataLenRef.current = 0; // Reset so next setData triggers full load
     loadData();
   }, [symbol, timeframe, loadData]);
 
   // Push data to chart when it changes
+  // Skip when data changed due to real-time updateBar() — updateData() already handles that
   useEffect(() => {
-    if (effectiveData.length > 0) {
+    if (effectiveData.length === 0) return;
+
+    // Detect if this is a "full load" or just a real-time bar update:
+    // - Full load: data length changes significantly (new symbol/timeframe) or loadedDataLen is 0
+    // - Replay: always needs full setData
+    // - Real-time: data length stays same or grows by 1 → skip (updateData handles it)
+    const isFullLoad = loadedDataLenRef.current === 0;
+    const isReplayUpdate = isReplaying;
+    const lenDiff = Math.abs(effectiveData.length - loadedDataLenRef.current);
+    const isSmallUpdate = lenDiff <= 1 && loadedDataLenRef.current > 0;
+
+    if (isFullLoad || isReplayUpdate || !isSmallUpdate) {
       const shouldFit = needsFitRef.current;
       setData(toChartData(effectiveData), toVolumeData(effectiveData), shouldFit);
       needsFitRef.current = false;
     }
-  }, [effectiveData, setData]);
+
+    loadedDataLenRef.current = effectiveData.length;
+  }, [effectiveData, setData, isReplaying]);
 
   // Calculate and render overlay indicators
   const renderIndicators = useCallback(() => {

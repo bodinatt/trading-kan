@@ -4,8 +4,8 @@ import type { DataProvider } from './types';
 const TD_REST = 'https://api.twelvedata.com';
 
 // Free tier: 8 symbols WebSocket, 800 API calls/day
-// Users should get their own API key at https://twelvedata.com (free)
-let API_KEY = localStorage.getItem('td-api-key') || '';
+const DEFAULT_API_KEY = '3b2f905f36c04b2686dd7b2be5daa9b6';
+let API_KEY = localStorage.getItem('td-api-key') || DEFAULT_API_KEY;
 
 export function setTwelveDataApiKey(key: string) {
   API_KEY = key;
@@ -14,6 +14,24 @@ export function setTwelveDataApiKey(key: string) {
 
 export function getTwelveDataApiKey(): string {
   return API_KEY;
+}
+
+/** Validate a TwelveData API key by making a lightweight test request */
+export async function validateTwelveDataApiKey(key: string): Promise<{ valid: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${TD_REST}/time_series?symbol=AAPL&interval=1day&outputsize=1&apikey=${key}`);
+    if (!res.ok) return { valid: false, error: `HTTP ${res.status}` };
+    const json = await res.json();
+    if (json.status === 'error') {
+      return { valid: false, error: json.message || 'Invalid API key' };
+    }
+    if (json.values && json.values.length > 0) {
+      return { valid: true };
+    }
+    return { valid: false, error: 'Unexpected response' };
+  } catch (err) {
+    return { valid: false, error: String(err) };
+  }
 }
 
 const TIMEFRAME_MAP: Record<TimeframeKey, string> = {

@@ -71,7 +71,9 @@ export function PanelContainer() {
       </div>
 
       {/* Body */}
-      {activePanel === 'alerts' ? (
+      {activePanel === 'watchlist' ? (
+        <WatchlistPanel />
+      ) : activePanel === 'alerts' ? (
         <AlertsPanel />
       ) : activePanel === 'dataWindow' ? (
         <div className="flex-1 overflow-y-auto p-3">

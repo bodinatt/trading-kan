@@ -107,7 +107,7 @@ export const useChartStore = create<ChartState>((set, get) => ({
 
   loadData: async () => {
     const { symbol, timeframe } = get();
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, data: [] });
     try {
       const data = await dataManager.fetchHistorical(symbol, timeframe, 5000);
       set({ data, isLoading: false, lastUpdatedAt: Date.now() });

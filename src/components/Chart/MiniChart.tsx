@@ -88,6 +88,66 @@ export function MiniChart({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Enable vertical dragging on chart area (price axis panning).
+  // Must disable autoScale first, then use coordinateToPrice to derive range.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isDragging = false;
+    let lastY = 0;
+    let startY = 0;
+    let hasDisabledAutoScale = false;
+    const DRAG_THRESHOLD = 3;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if (!container.contains(e.target as Node)) return;
+      isDragging = true;
+      lastY = e.clientY;
+      startY = e.clientY;
+      hasDisabledAutoScale = false;
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const chart = chartRef.current;
+      const series = seriesRef.current;
+      if (!chart || !series) return;
+
+      if (Math.abs(e.clientY - startY) < DRAG_THRESHOLD) return;
+      const deltaY = e.clientY - lastY;
+      if (deltaY === 0) return;
+      lastY = e.clientY;
+
+      const priceScale = chart.priceScale('right');
+      if (!hasDisabledAutoScale) {
+        priceScale.setAutoScale(false);
+        hasDisabledAutoScale = true;
+      }
+
+      const containerHeight = container.clientHeight;
+      const topPrice = series.coordinateToPrice(0);
+      const bottomPrice = series.coordinateToPrice(containerHeight);
+      if (topPrice === null || bottomPrice === null) return;
+
+      const priceRange = Math.abs(topPrice - bottomPrice);
+      const priceDelta = (deltaY / containerHeight) * priceRange;
+      const from = Math.min(topPrice, bottomPrice) + priceDelta;
+      const to = Math.max(topPrice, bottomPrice) + priceDelta;
+      priceScale.setVisibleRange({ from, to });
+    };
+    const onMouseUp = () => { isDragging = false; };
+
+    document.addEventListener('mousedown', onMouseDown, true);
+    document.addEventListener('mousemove', onMouseMove, true);
+    document.addEventListener('mouseup', onMouseUp, true);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown, true);
+      document.removeEventListener('mousemove', onMouseMove, true);
+      document.removeEventListener('mouseup', onMouseUp, true);
+    };
+  }, []);
+
   // Update theme without recreating chart
   useEffect(() => {
     if (!chartRef.current) return;
@@ -165,6 +225,7 @@ export function MiniChart({
     if (pendingDataRef.current) {
       const { data } = pendingDataRef.current;
       applyDataToSeries(series, volumeSeries, data, chartType);
+      chart.priceScale('right').setAutoScale(true);
       chart.timeScale().fitContent();
     }
   }, [chartType]);
@@ -181,6 +242,8 @@ export function MiniChart({
       if (seriesRef.current && volumeRef.current) {
         applyDataToSeries(seriesRef.current, volumeRef.current, data, chartTypeRef.current);
       }
+      // Re-enable autoScale — like double-clicking the price axis
+      chartRef.current?.priceScale('right').setAutoScale(true);
       chartRef.current?.timeScale().fitContent();
     } catch (err) {
       console.error('MiniChart load error:', err);
@@ -276,7 +339,15 @@ export function MiniChart({
           ? 'border-blue-500'
           : isDark ? 'border-gray-800 hover:border-gray-600' : 'border-gray-200 hover:border-gray-400'
       }`}
-      onClick={onActivate}
+      onClick={() => {
+        onActivate();
+        // Reset price scale — like double-clicking the price axis
+        const chart = chartRef.current;
+        if (chart) {
+          chart.priceScale('right').setAutoScale(true);
+          chart.timeScale().fitContent();
+        }
+      }}
     >
       {/* Symbol label */}
       <div className="absolute top-1 left-2 z-10 flex items-center gap-2">

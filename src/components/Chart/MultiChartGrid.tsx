@@ -17,7 +17,7 @@ export function MultiChartGrid() {
     <div className={`h-full w-full grid gap-1 ${gridClass}`}>
       {panels.map((panel, idx) => (
         <div
-          key={panel.id}
+          key={`${panel.id}-${panel.symbol}-${panel.timeframe}`}
           className={
             preset === '1+2' && idx === 0 ? 'row-span-2' : ''
           }

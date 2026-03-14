@@ -61,14 +61,15 @@ export function useChart(
     chartRef.current = chart;
 
     // Sync time scale to indicator panes using time-based range
-    const timeScaleUnsub = chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+    const timeRangeHandler = (range: import('lightweight-charts').Range<import('lightweight-charts').Time> | null) => {
       if (range) {
         useTimeScaleSyncStore.getState().setVisibleTimeRange({
           from: range.from,
           to: range.to,
         });
       }
-    });
+    };
+    chart.timeScale().subscribeVisibleTimeRangeChange(timeRangeHandler);
 
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current) {
@@ -81,7 +82,7 @@ export function useChart(
     resizeObserver.observe(containerRef.current);
 
     return () => {
-      timeScaleUnsub();
+      chart.timeScale().unsubscribeVisibleTimeRangeChange(timeRangeHandler);
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
@@ -90,6 +91,89 @@ export function useChart(
       overlaySeriesRef.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerRef]);
+
+  // Enable vertical dragging on the chart area (price axis panning).
+  // lightweight-charts only supports horizontal drag on chart area by default.
+  // We intercept mouse events in the capture phase to apply vertical panning.
+  //
+  // KEY INSIGHT: When autoScale is true (default), the library continuously
+  // recalculates the price range to fit visible data, which overrides any
+  // manual setVisibleRange() call. We must disable autoScale on the first
+  // vertical drag movement, then use series.coordinateToPrice() to derive
+  // the current visible price range (since getVisibleRange() returns null
+  // while autoScale is active).
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isDragging = false;
+    let lastY = 0;
+    let startY = 0;
+    let hasDisabledAutoScale = false;
+    const DRAG_THRESHOLD = 3;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if (!container.contains(e.target as Node)) return;
+      isDragging = true;
+      lastY = e.clientY;
+      startY = e.clientY;
+      hasDisabledAutoScale = false;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const chart = chartRef.current;
+      const series = seriesRef.current;
+      if (!chart || !series) return;
+
+      if (Math.abs(e.clientY - startY) < DRAG_THRESHOLD) return;
+
+      const deltaY = e.clientY - lastY;
+      if (deltaY === 0) return;
+      lastY = e.clientY;
+
+      const priceScale = chart.priceScale('right');
+
+      // On first vertical movement, disable autoScale so setVisibleRange sticks
+      if (!hasDisabledAutoScale) {
+        priceScale.setAutoScale(false);
+        hasDisabledAutoScale = true;
+      }
+
+      // Derive the current visible price range from pixel coordinates.
+      // coordinateToPrice converts a Y pixel position to a price value.
+      const containerHeight = container.clientHeight;
+      const topPrice = series.coordinateToPrice(0);
+      const bottomPrice = series.coordinateToPrice(containerHeight);
+
+      if (topPrice === null || bottomPrice === null) return;
+
+      const priceRange = Math.abs(topPrice - bottomPrice);
+      const priceDelta = (deltaY / containerHeight) * priceRange;
+
+      // Determine direction: in normal mode, top = high price, bottom = low price
+      const from = Math.min(topPrice, bottomPrice) + priceDelta;
+      const to = Math.max(topPrice, bottomPrice) + priceDelta;
+
+      priceScale.setVisibleRange({ from, to });
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+
+    // Capture phase ensures we fire before lightweight-charts' handlers
+    document.addEventListener('mousedown', onMouseDown, true);
+    document.addEventListener('mousemove', onMouseMove, true);
+    document.addEventListener('mouseup', onMouseUp, true);
+
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown, true);
+      document.removeEventListener('mousemove', onMouseMove, true);
+      document.removeEventListener('mouseup', onMouseUp, true);
+    };
   }, [containerRef]);
 
   // Update theme without recreating chart
@@ -108,34 +192,27 @@ export function useChart(
     });
   }, [timezone]);
 
-  // Create/recreate main series + volume when chartType changes
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (!chart) return;
-
-    chartTypeRef.current = chartType;
-
-    // Remove old main series if exists
+  /** Remove existing series and create fresh main + volume series */
+  const recreateSeries = useCallback((chart: IChartApi, ct: ChartType) => {
+    // Remove old main series
     if (seriesRef.current) {
-      chart.removeSeries(seriesRef.current);
+      try { chart.removeSeries(seriesRef.current); } catch { /* already removed */ }
       seriesRef.current = null;
     }
-
-    // Remove old volume series if exists
+    // Remove old volume series
     if (volumeRef.current) {
-      chart.removeSeries(volumeRef.current);
+      try { chart.removeSeries(volumeRef.current); } catch { /* already removed */ }
       volumeRef.current = null;
     }
-
-    // Remove old overlay series
-    for (const [, series] of overlaySeriesRef.current) {
-      chart.removeSeries(series);
+    // Remove old overlays
+    for (const [, s] of overlaySeriesRef.current) {
+      try { chart.removeSeries(s); } catch { /* already removed */ }
     }
     overlaySeriesRef.current.clear();
 
-    // Add new main series based on chart type
+    // Create new main series
     let mainSeries: MainSeriesApi;
-    switch (chartType) {
+    switch (ct) {
       case 'candle':
         mainSeries = chart.addSeries(CandlestickSeries, {
           upColor: '#22c55e',
@@ -170,7 +247,7 @@ export function useChart(
     }
     seriesRef.current = mainSeries;
 
-    // Re-add volume histogram
+    // Create new volume series
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
@@ -180,6 +257,18 @@ export function useChart(
     });
     volumeRef.current = volumeSeries;
 
+    return { mainSeries, volumeSeries };
+  }, []);
+
+  // Create/recreate main series + volume when chartType changes
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    chartTypeRef.current = chartType;
+
+    const { mainSeries, volumeSeries } = recreateSeries(chart, chartType);
+
     // Re-apply pending data if available
     if (pendingDataRef.current) {
       const { data, volumeData } = pendingDataRef.current;
@@ -187,6 +276,7 @@ export function useChart(
       if (volumeData) {
         volumeSeries.setData(volumeData);
       }
+      chart.priceScale('right').setAutoScale(true);
       const VISIBLE_BARS = 200;
       if (data.length > VISIBLE_BARS) {
         chart.timeScale().setVisibleLogicalRange({
@@ -197,7 +287,7 @@ export function useChart(
         chart.timeScale().fitContent();
       }
     }
-  }, [chartType]);
+  }, [chartType, recreateSeries]);
 
   const setData = useCallback(
     (
@@ -208,28 +298,41 @@ export function useChart(
       // Store data for re-application on chart type change
       pendingDataRef.current = { data, volumeData };
 
-      if (seriesRef.current) {
-        setSeriesData(seriesRef.current, data, chartTypeRef.current);
-      }
-      if (volumeData) {
-        volumeRef.current?.setData(volumeData);
-      }
-      if (shouldFitContent && chartRef.current) {
-        const timeScale = chartRef.current.timeScale();
-        // Show last ~200 bars for a good default zoom level (like TradingView)
+      const chart = chartRef.current;
+      if (!chart) return;
+
+      if (shouldFitContent) {
+        // Recreate series from scratch to fully reset the price scale.
+        // lightweight-charts' setAutoScale(true) only sets a flag but does NOT
+        // trigger price-range recalculation. Removing + re-adding series is the
+        // only reliable way to reset the price axis after user has dragged it.
+        const { mainSeries, volumeSeries } = recreateSeries(chart, chartTypeRef.current);
+        setSeriesData(mainSeries, data, chartTypeRef.current);
+        if (volumeData) {
+          volumeSeries.setData(volumeData);
+        }
+
         const VISIBLE_BARS = 200;
-        const totalBars = data.length;
-        if (totalBars > VISIBLE_BARS) {
-          timeScale.setVisibleLogicalRange({
-            from: totalBars - VISIBLE_BARS,
-            to: totalBars + 10, // Small right margin
+        if (data.length > VISIBLE_BARS) {
+          chart.timeScale().setVisibleLogicalRange({
+            from: data.length - VISIBLE_BARS,
+            to: data.length + 10,
           });
         } else {
-          timeScale.fitContent();
+          chart.timeScale().fitContent();
+        }
+
+      } else {
+        // Real-time update path — just set data without recreating
+        if (seriesRef.current) {
+          setSeriesData(seriesRef.current, data, chartTypeRef.current);
+        }
+        if (volumeData) {
+          volumeRef.current?.setData(volumeData);
         }
       }
     },
-    []
+    [recreateSeries]
   );
 
   const updateData = useCallback((bar: CandlestickData) => {
@@ -297,19 +400,33 @@ export function useChart(
   }, []);
 
   const fitContent = useCallback(() => {
-    if (!chartRef.current) return;
-    const timeScale = chartRef.current.timeScale();
-    const totalBars = pendingDataRef.current?.data.length ?? 0;
+    const chart = chartRef.current;
+    if (!chart) return;
+    const data = pendingDataRef.current?.data;
+    const volumeData = pendingDataRef.current?.volumeData;
+    if (!data || data.length === 0) return;
+
+    // Recreate all series from scratch — the only reliable way to reset price scale
+    const { mainSeries, volumeSeries } = recreateSeries(chart, chartTypeRef.current);
+    setSeriesData(mainSeries, data, chartTypeRef.current);
+    if (volumeData) {
+      volumeSeries.setData(volumeData);
+    }
+
+    // Re-enable autoScale — like double-clicking the price axis
+    chart.priceScale('right').setAutoScale(true);
+
+    // Show last 200 bars on time axis
     const VISIBLE_BARS = 200;
-    if (totalBars > VISIBLE_BARS) {
-      timeScale.setVisibleLogicalRange({
-        from: totalBars - VISIBLE_BARS,
-        to: totalBars + 10,
+    if (data.length > VISIBLE_BARS) {
+      chart.timeScale().setVisibleLogicalRange({
+        from: data.length - VISIBLE_BARS,
+        to: data.length + 10,
       });
     } else {
-      timeScale.fitContent();
+      chart.timeScale().fitContent();
     }
-  }, []);
+  }, [recreateSeries]);
 
   const zoomIn = useCallback(() => {
     const timeScale = chartRef.current?.timeScale();
@@ -324,6 +441,14 @@ export function useChart(
         to: center + newSize / 2,
       });
     }
+  }, []);
+
+  /** Reset price scale — like double-clicking the price axis.
+   *  Re-enables autoScale so the price range fits visible data. */
+  const resetScale = useCallback(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    chart.priceScale('right').setAutoScale(true);
   }, []);
 
   const zoomOut = useCallback(() => {
@@ -401,6 +526,7 @@ export function useChart(
     clearOverlays,
     setPriceScaleMode,
     fitContent,
+    resetScale,
     zoomIn,
     zoomOut,
   };

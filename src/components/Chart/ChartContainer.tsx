@@ -103,7 +103,12 @@ export function ChartContainer() {
   // Push data to chart when it changes
   // Skip when data changed due to real-time updateBar() — updateData() already handles that
   useEffect(() => {
-    if (effectiveData.length === 0) return;
+    if (effectiveData.length === 0) {
+      // Data was cleared (symbol change) — reset so next load is treated as full load
+      loadedDataLenRef.current = 0;
+      needsFitRef.current = true;
+      return;
+    }
 
     // Detect if this is a "full load" or just a real-time bar update:
     // - Full load: data length changes significantly (new symbol/timeframe) or loadedDataLen is 0

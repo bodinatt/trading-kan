@@ -394,13 +394,15 @@ export function runBacktest(
   const trades: Trade[] = [];
   let tradeId = 0;
   let capital = settings.initialCapital;
-  let position: {
+  type Position = {
     direction: TradeDirection;
     entryIdx: number;
     entryPrice: number;
     size: number;
     capitalAtEntry: number;
-  } | null = null;
+  };
+  let position: Position | null = null;
+  const getPos = (): Position | null => position;
 
   const equityCurve: EquityPoint[] = [];
   let peakEquity = capital;
@@ -448,27 +450,27 @@ export function runBacktest(
     const sig = signals[i];
 
     // Check stop loss / take profit for existing position
-    if (position) {
+    const pos = getPos();
+    if (pos) {
       const currentPrice = data[i].close;
-      const priceDiff = position.direction === 'long'
-        ? currentPrice - position.entryPrice
-        : position.entryPrice - currentPrice;
-      const pctChange = (priceDiff / position.entryPrice) * 100;
+      const priceDiff = pos.direction === 'long'
+        ? currentPrice - pos.entryPrice
+        : pos.entryPrice - currentPrice;
+      const pctChange = (priceDiff / pos.entryPrice) * 100;
 
       let shouldClose = false;
       let closePrice = currentPrice;
 
       if (settings.stopLossPct > 0 && pctChange <= -settings.stopLossPct) {
         shouldClose = true;
-        // Approximate the stop price
-        closePrice = position.direction === 'long'
-          ? position.entryPrice * (1 - settings.stopLossPct / 100)
-          : position.entryPrice * (1 + settings.stopLossPct / 100);
+        closePrice = pos.direction === 'long'
+          ? pos.entryPrice * (1 - settings.stopLossPct / 100)
+          : pos.entryPrice * (1 + settings.stopLossPct / 100);
       } else if (settings.takeProfitPct > 0 && pctChange >= settings.takeProfitPct) {
         shouldClose = true;
-        closePrice = position.direction === 'long'
-          ? position.entryPrice * (1 + settings.takeProfitPct / 100)
-          : position.entryPrice * (1 - settings.takeProfitPct / 100);
+        closePrice = pos.direction === 'long'
+          ? pos.entryPrice * (1 + settings.takeProfitPct / 100)
+          : pos.entryPrice * (1 - settings.takeProfitPct / 100);
       }
 
       if (shouldClose) {
@@ -479,29 +481,32 @@ export function runBacktest(
     // Process signal
     if (sig === 1) {
       // Buy signal
-      if (position && position.direction === 'short') {
+      const p1 = getPos();
+      if (p1 && p1.direction === 'short') {
         closePosition(i, data[i].close);
       }
-      if (!position && (settings.direction === 'long' || settings.direction === 'both')) {
+      if (!getPos() && (settings.direction === 'long' || settings.direction === 'both')) {
         openPosition(i, 'long');
       }
     } else if (sig === -1) {
       // Sell signal
-      if (position && position.direction === 'long') {
+      const p2 = getPos();
+      if (p2 && p2.direction === 'long') {
         closePosition(i, data[i].close);
       }
-      if (!position && (settings.direction === 'short' || settings.direction === 'both')) {
+      if (!getPos() && (settings.direction === 'short' || settings.direction === 'both')) {
         openPosition(i, 'short');
       }
     }
 
     // Calculate equity
     let equity = capital;
-    if (position) {
+    const curPos = getPos();
+    if (curPos) {
       const unrealizedPnl =
-        position.direction === 'long'
-          ? (data[i].close - position.entryPrice) * position.size
-          : (position.entryPrice - data[i].close) * position.size;
+        curPos.direction === 'long'
+          ? (data[i].close - curPos.entryPrice) * curPos.size
+          : (curPos.entryPrice - data[i].close) * curPos.size;
       equity += unrealizedPnl;
     }
 

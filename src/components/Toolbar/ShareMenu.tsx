@@ -101,7 +101,7 @@ export function ShareMenu() {
     setPos({ top: r.bottom + 4, left: r.left });
   }, [open]);
 
-  const menuItems: { label: string; icon: JSX.Element; action: () => void }[] = [
+  const menuItems: { label: string; icon: React.ReactNode; action: () => void }[] = [
     {
       label: t.copyChartImage,
       icon: (

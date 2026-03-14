@@ -36,6 +36,7 @@ const THEME_COLORS: Record<Theme, ThemeColors> = {
 
 interface ThemeState {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   colors: ThemeColors;
 }
@@ -45,6 +46,10 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       theme: 'dark',
       colors: THEME_COLORS.dark,
+
+      setTheme: (t: Theme) => {
+        set({ theme: t, colors: THEME_COLORS[t] });
+      },
 
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';

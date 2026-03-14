@@ -15,11 +15,6 @@ interface CloudSettings {
   td_api_key: string;
 }
 
-interface CloudWatchlistItem {
-  symbol: string;
-  name: string;
-}
-
 interface CloudAlert {
   symbol: string;
   price: number;

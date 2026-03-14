@@ -59,9 +59,9 @@ export function ReplayControls() {
     ? new Date(currentBar.time * 1000).toLocaleString()
     : '';
 
-  const progressPct = fullData.length > 0 ? (replayIndex / fullData.length) * 100 : 0;
+  const _progressPct = fullData.length > 0 ? (replayIndex / fullData.length) * 100 : 0;
 
-  const currentSpeedLabel = SPEED_OPTIONS.find((s) => s.value === replaySpeed)?.label ?? `${replaySpeed}ms`;
+  const _currentSpeedLabel = SPEED_OPTIONS.find((s) => s.value === replaySpeed)?.label ?? `${replaySpeed}ms`;
 
   return (
     <div
